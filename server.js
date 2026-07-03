@@ -59,12 +59,12 @@ app.get('/api/news', async (req, res) => {
   }
 });
 
-// ---- 背景解説の生成（APIキー未設定なら課金なしで案内のみ） ----
+// ---- 背景解説の生成（Gemini APIの無料枠を使用。APIキー未設定なら課金なしで案内のみ） ----
 app.post('/api/explain', async (req, res) => {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     return res.status(400).json({
-      error: 'この機能を使うにはAPIキーが必要です。.envファイルにANTHROPIC_API_KEYを設定してください（設定するまでは課金は一切発生しません）。',
+      error: 'この機能を使うにはAPIキーが必要です。.envファイルにGEMINI_API_KEYを設定してください（Gemini APIの無料枠なので基本的に課金は発生しません）。',
       needsApiKey: true,
     });
   }
@@ -73,7 +73,7 @@ app.post('/api/explain', async (req, res) => {
   if (!title) return res.status(400).json({ error: 'title is required' });
 
   try {
-     const prompt = `次のニュース見出しについて、国際情勢に詳しくない人でも文脈が分かるように、日本語で簡潔に解説してください。全体で4〜5文程度に収め、以下の要素を自然な文章に織り込んでください。
+    const prompt = `次のニュース見出しについて、国際情勢に詳しくない人でも文脈が分かるように、日本語で簡潔に解説してください。全体で4〜5文程度に収め、以下の要素を自然な文章に織り込んでください。
 
 - なぜ今この話題が動いているか（背景・経緯）
 - 経済や市場への影響（為替・株価・特定の産業などへの波及があれば）
@@ -84,19 +84,16 @@ app.post('/api/explain', async (req, res) => {
 見出し: ${title}
 概要: ${desc || ''}`;
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-5',
-        max_tokens: 500,
-        messages: [{ role: 'user', content: prompt }],
-      }),
-    });
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+        }),
+      }
+    );
 
     if (!response.ok) {
       const errText = await response.text();
@@ -104,10 +101,10 @@ app.post('/api/explain', async (req, res) => {
     }
 
     const data = await response.json();
-    const textBlock = (data.content || []).find((b) => b.type === 'text');
-    if (!textBlock || !textBlock.text) throw new Error('empty response');
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) throw new Error('empty response');
 
-    res.json({ explain: textBlock.text.trim() });
+    res.json({ explain: text.trim() });
   } catch (err) {
     console.error('解説生成エラー:', err.message);
     res.status(500).json({ error: '解説の生成に失敗しました。しばらくして再度お試しください。' });
@@ -117,7 +114,7 @@ app.post('/api/explain', async (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ World Pulse が起動しました: http://localhost:${PORT}`);
-  if (!process.env.ANTHROPIC_API_KEY) {
-    console.log('ℹ️  解説機能は現在オフです（.envにANTHROPIC_API_KEYを設定すると使えます）');
+  if (!process.env.GEMINI_API_KEY) {
+    console.log('ℹ️  解説機能は現在オフです（.envにGEMINI_API_KEYを設定すると使えます）');
   }
 });
