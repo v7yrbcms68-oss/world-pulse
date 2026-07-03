@@ -58,10 +58,12 @@
   .card.open .explain-btn .chevron { transform: rotate(180deg); }
 
   .explain-box { max-height: 0; overflow: hidden; transition: max-height 0.3s ease, margin-top 0.3s ease; }
-  .card.open .explain-box { max-height: 320px; margin-top: 12px; }
+  .card.open .explain-box { max-height: 260px; margin-top: 12px; overflow-y: auto; }
   .explain-inner { background: var(--bg); border-radius: 14px; padding: 14px 16px; border: 1.5px dashed var(--line); }
   .explain-label { font-size: 11px; font-weight: 700; color: var(--purple); letter-spacing: 0.03em; margin-bottom: 6px; display: flex; align-items: center; gap: 5px; }
   .explain-inner p { font-size: 13px; line-height: 1.65; color: var(--ink); margin: 0; }
+  .card.open .explain-box::-webkit-scrollbar { width: 6px; }
+  .card.open .explain-box::-webkit-scrollbar-thumb { background: var(--line); border-radius: 999px; }
 
   .empty-state, .error-state { text-align: center; padding: 40px 20px; color: var(--ink-soft); }
   .retry-btn { margin-top: 12px; border: none; background: var(--ink); color: #fff; font-weight: 600; padding: 8px 18px; border-radius: 999px; cursor: pointer; font-size: 13px; }
@@ -161,8 +163,7 @@ function renderTicker() {
 }
 
 function renderFilters() {
-  const present = new Set(articles.map(a => a.region));
-  const all = [{ key: 'all', label: 'すべて', color: '#1B1B3A' }, ...REGIONS.filter(r => present.has(r.key))];
+  const all = [{ key: 'all', label: 'すべて', color: '#1B1B3A' }, ...REGIONS];
   filtersEl.innerHTML = all.map(r =>
     `<button class="chip ${activeFilter === r.key ? 'active' : ''}" data-key="${r.key}">${r.label}</button>`
   ).join('');
@@ -174,6 +175,12 @@ function renderFilters() {
 function renderFeed() {
   if (!articles.length) {
     feedEl.innerHTML = `<div class="empty-state"><p>表示できるニュースがありません。</p></div>`;
+    return;
+  }
+  const visibleCount = articles.filter(a => activeFilter === 'all' || activeFilter === a.region).length;
+  if (visibleCount === 0) {
+    const r = regionMap[activeFilter];
+    feedEl.innerHTML = `<div class="empty-state"><p>現在「${r ? r.label : ''}」のニュースはありません。<br>時間をおいて再読み込みしてみてください。</p></div>`;
     return;
   }
   feedEl.innerHTML = articles.map((a, i) => {
