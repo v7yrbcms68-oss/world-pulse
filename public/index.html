@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>World Pulse — 国際情勢まとめ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F5F3FF; --card: #FFFFFF; --ink: #1B1B3A; --ink-soft: #5C5A7A;
+    --coral: #FF5E7E; --yellow: #FFD23F; --teal: #2EC4B6; --purple: #8B7EF7;
+    --amber: #FFB238; --gray: #8B899E; --line: #E7E3FA;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
+  .display { font-family: 'Baloo 2', sans-serif; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+
+  header { padding: 28px 20px 16px; max-width: 720px; margin: 0 auto; }
+  .brand-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-dot { width: 14px; height: 14px; border-radius: 50%; background: conic-gradient(var(--coral), var(--yellow), var(--teal), var(--purple), var(--coral)); flex-shrink: 0; }
+  .brand h1 { font-size: 26px; margin: 0; letter-spacing: -0.02em; }
+  .status-pill { font-size: 11px; font-weight: 600; padding: 5px 11px; border-radius: 999px; display: flex; align-items: center; gap: 5px; color: var(--ink-soft); background: var(--card); border: 1.5px solid var(--line); }
+  .status-pill .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gray); }
+  .status-pill.live .dot { background: var(--teal); }
+  .status-pill.error .dot { background: var(--coral); }
+  .tagline { color: var(--ink-soft); font-size: 14px; margin: 0 0 18px 24px; }
+
+  .ticker-wrap { overflow: hidden; background: var(--ink); border-radius: 999px; padding: 10px 0; margin-bottom: 4px; }
+  .ticker { display: flex; gap: 28px; white-space: nowrap; animation: scroll 32s linear infinite; width: max-content; }
+  .ticker span { color: #fff; font-size: 13px; display: flex; align-items: center; gap: 8px; }
+  .ticker .pip { width: 6px; height: 6px; border-radius: 50%; background: var(--yellow); flex-shrink: 0; }
+  @keyframes scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; max-width: 720px; margin: 20px auto 8px; padding: 0 20px; }
+  .chip { border: none; border-radius: 999px; padding: 8px 16px; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 13px; cursor: pointer; background: var(--card); color: var(--ink-soft); border: 1.5px solid var(--line); transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease; }
+  .chip:hover { transform: translateY(-1px); }
+  .chip.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+  main { max-width: 720px; margin: 0 auto; padding: 12px 20px 60px; display: flex; flex-direction: column; gap: 14px; }
+  .card { background: var(--card); border-radius: 20px; padding: 18px 20px; border: 1.5px solid var(--line); transition: transform 0.15s ease, box-shadow 0.15s ease; }
+  .card:hover { transform: translateY(-2px); box-shadow: 0 10px 24px -12px rgba(27,27,58,0.18); }
+  .card.hidden { display: none; }
+  .card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; gap: 8px; }
+  .tag { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px; color: #fff; letter-spacing: 0.02em; white-space: nowrap; }
+  .time { font-size: 11px; color: var(--ink-soft); white-space: nowrap; }
+  .card h2 { font-family: 'Baloo 2', sans-serif; font-size: 18px; margin: 0 0 6px; line-height: 1.4; }
+  .card h2 a { color: inherit; text-decoration: none; }
+  .card h2 a:hover { text-decoration: underline; }
+  .card p.desc { font-size: 13.5px; color: var(--ink-soft); margin: 0; line-height: 1.6; }
+  .card-foot { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 12px; font-size: 12px; color: var(--ink-soft); }
+
+  .explain-btn { border: none; background: var(--bg); color: var(--ink); font-family: 'Inter', sans-serif; font-weight: 600; font-size: 12px; padding: 6px 12px; border-radius: 999px; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: background 0.15s ease; }
+  .explain-btn:hover { background: var(--line); }
+  .explain-btn .chevron { transition: transform 0.2s ease; font-size: 10px; }
+  .card.open .explain-btn .chevron { transform: rotate(180deg); }
+
+  .explain-box { max-height: 0; overflow: hidden; transition: max-height 0.3s ease, margin-top 0.3s ease; }
+  .card.open .explain-box { max-height: 320px; margin-top: 12px; }
+  .explain-inner { background: var(--bg); border-radius: 14px; padding: 14px 16px; border: 1.5px dashed var(--line); }
+  .explain-label { font-size: 11px; font-weight: 700; color: var(--purple); letter-spacing: 0.03em; margin-bottom: 6px; display: flex; align-items: center; gap: 5px; }
+  .explain-inner p { font-size: 13px; line-height: 1.65; color: var(--ink); margin: 0; }
+
+  .empty-state, .error-state { text-align: center; padding: 40px 20px; color: var(--ink-soft); }
+  .retry-btn { margin-top: 12px; border: none; background: var(--ink); color: #fff; font-weight: 600; padding: 8px 18px; border-radius: 999px; cursor: pointer; font-size: 13px; }
+
+  .skeleton-card { background: var(--card); border-radius: 20px; padding: 18px 20px; border: 1.5px solid var(--line); }
+  .skeleton-line { height: 12px; border-radius: 6px; background: var(--line); margin-bottom: 8px; animation: pulse 1.4s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+  footer { text-align: center; padding: 20px; color: var(--ink-soft); font-size: 12px; }
+
+  @media (max-width: 480px) {
+    .brand h1 { font-size: 22px; }
+    .card h2 { font-size: 16.5px; }
+    .status-pill span.label { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand-row">
+    <div class="brand">
+      <div class="brand-dot"></div>
+      <h1 class="display">World Pulse</h1>
+    </div>
+    <div class="status-pill" id="statusPill"><span class="dot"></span><span class="label" id="statusLabel">読み込み中</span></div>
+  </div>
+  <p class="tagline">世界のいまを、軽やかに追う</p>
+  <div class="ticker-wrap"><div class="ticker" id="ticker"><span>読み込み中…</span></div></div>
+</header>
+
+<div class="filters" id="filters"></div>
+
+<main id="feed">
+  <div class="skeleton-card"><div class="skeleton-line" style="width:30%"></div><div class="skeleton-line" style="width:80%"></div><div class="skeleton-line" style="width:60%"></div></div>
+  <div class="skeleton-card"><div class="skeleton-line" style="width:25%"></div><div class="skeleton-line" style="width:70%"></div><div class="skeleton-line" style="width:50%"></div></div>
+</main>
+
+<footer>World Pulse ・ ニュースはGoogleニュースより取得、背景解説はAIが生成します</footer>
+
+<script>
+const REGIONS = [
+  { key: 'asia', label: 'アジア', color: '#FF5E7E' },
+  { key: 'europe', label: 'ヨーロッパ', color: '#2EC4B6' },
+  { key: 'mideast', label: '中東', color: '#8B7EF7' },
+  { key: 'americas', label: '米州', color: '#FFB238' },
+  { key: 'intl', label: '国際', color: '#8B899E' },
+];
+const regionMap = Object.fromEntries(REGIONS.map(r => [r.key, r]));
+
+let articles = [];
+let activeFilter = 'all';
+
+const feedEl = document.getElementById('feed');
+const filtersEl = document.getElementById('filters');
+const tickerEl = document.getElementById('ticker');
+const statusPill = document.getElementById('statusPill');
+const statusLabel = document.getElementById('statusLabel');
+
+function setStatus(mode) {
+  statusPill.classList.remove('live', 'error');
+  if (mode === 'live') { statusPill.classList.add('live'); statusLabel.textContent = 'ライブ取得中'; }
+  else if (mode === 'error') { statusPill.classList.add('error'); statusLabel.textContent = '取得エラー'; }
+  else { statusLabel.textContent = '読み込み中'; }
+}
+
+async function loadNews() {
+  setStatus('loading');
+  try {
+    const res = await fetch('/api/news');
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'failed');
+    articles = data.items.map(a => ({ ...a, explain: null, explainLoading: false, explainError: null, _open: false }));
+    setStatus('live');
+    renderTicker();
+    renderFilters();
+    renderFeed();
+  } catch (err) {
+    console.error(err);
+    setStatus('error');
+    feedEl.innerHTML = `
+      <div class="error-state">
+        <p>ニュースの取得に失敗しました。</p>
+        <button class="retry-btn" onclick="loadNews()">もう一度試す</button>
+      </div>`;
+    filtersEl.innerHTML = '';
+    tickerEl.innerHTML = '<span>取得エラー</span>';
+  }
+}
+
+function renderTicker() {
+  const items = [...articles, ...articles].map(a => {
+    const r = regionMap[a.region];
+    return `<span><span class="pip" style="background:${r.color}"></span>${r.label} · ${a.title}</span>`;
+  }).join('');
+  tickerEl.innerHTML = items || '<span>ニュースがありません</span>';
+}
+
+function renderFilters() {
+  const present = new Set(articles.map(a => a.region));
+  const all = [{ key: 'all', label: 'すべて', color: '#1B1B3A' }, ...REGIONS.filter(r => present.has(r.key))];
+  filtersEl.innerHTML = all.map(r =>
+    `<button class="chip ${activeFilter === r.key ? 'active' : ''}" data-key="${r.key}">${r.label}</button>`
+  ).join('');
+  filtersEl.querySelectorAll('.chip').forEach(btn => {
+    btn.addEventListener('click', () => { activeFilter = btn.dataset.key; renderFilters(); renderFeed(); });
+  });
+}
+
+function renderFeed() {
+  if (!articles.length) {
+    feedEl.innerHTML = `<div class="empty-state"><p>表示できるニュースがありません。</p></div>`;
+    return;
+  }
+  feedEl.innerHTML = articles.map((a, i) => {
+    const r = regionMap[a.region];
+    const show = activeFilter === 'all' || activeFilter === a.region;
+    const isOpen = a._open ? 'open' : '';
+    let explainInner;
+    if (a.explainLoading) explainInner = `<p>解説を作成中…</p>`;
+    else if (a.explainError) explainInner = `<p>${a.explainError}</p>`;
+    else if (a.explain) explainInner = `<p>${a.explain}</p>`;
+    else explainInner = `<p>ボタンを押すと背景を解説します。</p>`;
+
+    return `
+      <div class="card ${show ? '' : 'hidden'} ${isOpen}" data-idx="${i}">
+        <div class="card-top">
+          <span class="tag" style="background:${r.color}">${r.label}</span>
+          <span class="time mono">${a.time}</span>
+        </div>
+        <h2><a href="${a.link}" target="_blank" rel="noopener">${a.title}</a></h2>
+        <p class="desc">${a.desc}</p>
+        <div class="card-foot">
+          <button class="explain-btn" data-idx="${i}">💡 前提を解説 <span class="chevron">▾</span></button>
+        </div>
+        <div class="explain-box"><div class="explain-inner"><div class="explain-label">💡 背景解説</div>${explainInner}</div></div>
+      </div>
+    `;
+  }).join('');
+
+  feedEl.querySelectorAll('.explain-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const idx = Number(btn.dataset.idx);
+      const a = articles[idx];
+      const card = btn.closest('.card');
+      a._open = !a._open;
+      card.classList.toggle('open');
+      if (a._open && !a.explain && !a.explainLoading && !a.explainError) {
+        await fetchExplain(idx);
+      }
+    });
+  });
+}
+
+async function fetchExplain(idx) {
+  const a = articles[idx];
+  a.explainLoading = true;
+  renderFeed();
+  try {
+    const res = await fetch('/api/explain', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: a.title, desc: a.desc }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || '解説を取得できませんでした。');
+    a.explain = data.explain;
+  } catch (err) {
+    a.explainError = err.message;
+  } finally {
+    a.explainLoading = false;
+    renderFeed();
+  }
+}
+
+loadNews();
+</script>
+
+</body>
+</html>
